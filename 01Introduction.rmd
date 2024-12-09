@@ -30,8 +30,8 @@ covariances and are different at every location.
 The standard spatial model for Kriging relates the observation to a sum of three components:
 a \textit{fixed part} typically a polynomial function of the locations (and covariates,
 if provided),
-a \textit{spatial process}, and \textit{measurement error}. This is a more practical model for data
-analysis but involves more complicated formulae for the Kriging weights. The LatticeKrig (LK) model
+a \textit{spatial process}, and \textit{measurement error}. This is a practical model for data
+analysis but involves complicated formulae for the Kriging weights. The LatticeKrig (LK) model
 like most spatial methods, decomposes the data into these three components.
 
 ## The LatticeKrig model
@@ -39,13 +39,16 @@ like most spatial methods, decomposes the data into these three components.
 The key feature of LatticeKrig is that we model a spatial process as the sum of radial basis functions (functions that are symmetric around their center and are 0 for far away points) scaled by coefficients, which we assume are correlated. The smooth basis functions and correlated coefficients create a smooth function representation for the spatial process, and the structure of the basis functions and covariance has some flexibility so you can change the structure to make a more reasonable model for a certain problem. The linear polynomial in the locations and covariates is determined using generalized least squares, following the standard approach of Universal Kriging. To approximate the spatial process, we then fit the basis functions to the residuals from the linear model. In terms of linear algebra, the model is
 $$\mathbf y = X \mathbf d + \Phi \mathbf c + \mathbf e$$
 where $\mathbf y$ is the vector of variable measurements, $X$ is the matrix of locations and covariates, $\mathbf d$ is the vector of coefficients for the linear model, $\Phi$ is the matrix of basis functions evaluated at the data points, $\mathbf c$ is the vector of coefficients for each basis function, and $\mathbf e$ is the measurement error. If we let $\mathbf g$ represent the true values of the variable (without measurement error $\mathbf e$), we can unroll the matrix multiplications into sums and get the form
-$$ g(\mathbf s) = \sum_{k=1}^n \phi_k(\mathbf s) \hat {\mathbf d}_k + \sum_{k=1}^m \psi_k (\mathbf s) \hat{\mathbf c}_k$$
+$$ g(\mathbf s) = \sum_{l=1}^n X_l(\mathbf s) \hat {\mathbf d}_l + \sum_{k=1}^m \psi_k (\mathbf s) \hat{\mathbf c}_k$$
+
+Here $X_l(s)$ is the l'th column of the X matrix for locations s, and $\psi_k(\mathbf s)$ is the k'th column of $\Phi$ (a Wendland covariance function).
+
 We show the derivations of the equations for $\mathbf c$ and $\mathbf d$ in Appendix A, and show how all of these calculations are done in Appendix C.
 
 The package is named LatticeKrig because of the placement of the basis functions: they are equally spaced in all dimensions on a lattice. We can also consider multiple different lattice sizes simultaneously to better capture different levels of resolution; by default, each additional level has half as much space between the basis functions in each dimension.
 The following plot shows the basis functions for each of the three default levels.
 
-But before we start with code here are the R, fields package, and LatticeKrig package versions
+But before we start with code, here are the R, fields package, and LatticeKrig package versions
 used throughout this vignette. Use these to check your versions if you get errors and we will try to make this vignette compatible with latter versions.   
 
 ```{r versions, echo=TRUE}
