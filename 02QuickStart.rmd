@@ -177,7 +177,7 @@ set.seed(333)
 suppressMessages(
   gCondSim <- LKrig.sim.conditional(kFit1D, x.grid=xGrid2, M=75)
 )
-index of where minimum occurs in each draw
+#index of where minimum occurs in each draw
 minXIndex <- apply(gCondSim$g.draw, 2, which.min)
 XMin <- xGrid2[minXIndex]
 YMin <- apply(gCondSim$g.draw, 2, min)
