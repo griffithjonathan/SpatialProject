@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-In this section, we will lay out the bare essentials of the package as a quick overview for the impatient reader. To fit a surface and interpolate data using \ttt{LatticeKrig}, the only required arguments are, naturally, the measurement locations (formatted in a matrix where each row indexes one location) and measurement values. However, we highly recommend using some of the optional parameters to customize the model to your specific data problem - several ways to do this are illustrated in this vignette. Calling the \ttt{LatticeKrig} function and passing in the locations and values will produce an \ttt{LatticeKrig} object that contains all the information needed to predict the variable at any location. Also, some spatial parameters are estimated by maximum likelihood if not specified. 
+In this section, we will lay out the bare essentials of the package as a quick overview for the impatient reader. To fit a surface and interpolate data using \ttt{LatticeKrig}, the only required arguments are, naturally, the measurement locations (formatted in a matrix where each row indexes one location) and measurement values. However, we highly recommend using some of the optional parameters (see Section 3) to customize the model to your specific data problem - several ways to do this are illustrated in this vignette. Calling the \ttt{LatticeKrig} function and passing in the locations and values will produce a \ttt{LatticeKrig} object that contains all the information needed to predict the variable at any location. Also, some spatial parameters are estimated by maximum likelihood if not specified. 
 
 For a simple, 1-dimensional example, we will take our locations to be 50 randomly spaced points on the interval $[-6, 6]$, and our observations to be the values of $\sin(x)$ at these locations with some added error. The goal of our kriging fit is to estimate this smooth curve from the observations.
 
@@ -12,19 +12,19 @@ set.seed(223)
 locations <- runif(50, min=-6, max=6)
 locations <- as.matrix(locations)
 observations <- sin(locations) + rnorm(50, sd = 1e-1)
-#Fit to the data, with parameters sigma and rho found by maximum likelihood.
+#Fit to the data, with parameters tau and sigma2 found by maximum likelihood.
 kFit1D <- LatticeKrig(locations, observations)
 ```
 
-Now we will print out the \ttt{LKrig} object: this list features the data's estimated covariance scale \ttt{rho} and estimated standard measurement error \ttt{sigma}, and the basis function description: the type of basis function, how distance is measured, and the number and spacing of basis functions. In this example, all of this information is determined by \ttt{LatticeKrig} from defaults, but can be changed with optional parameters.
+Now we will print out the \ttt{LatticeKrig} object: this list features the data's estimated covariance scale \ttt{sigma}$^2$ and estimated standard measurement error \ttt{tau}, and the basis function description: the type of basis function, how distance is measured, and the number and spacing of basis functions. In this example, all of this information is determined by \ttt{LatticeKrig} from defaults, but can be changed with optional parameters (see Section 3).
 
 ```{r QuickStart1DPrintout}
 print(kFit1D)
 ```
 
-In the printout above, \ttt{sigma} is the estimated standard deviation of the measurement error; we set it to be 0.1, so the estimate 0.106 is great. EDF is a measurement of how strictly the model matches the original data; when EDF = 1, the model will be a straight line; when EDF equals the number of observations, the model will exactly match each recorded data point. We can also see the type of basis function used: in this case it is the Wendland function. We also have the default 3 levels to capture different effect scales.
+In the printout above, \ttt{tau} is the estimated standard deviation of the measurement error; we set it to be 0.1, so the estimate 0.106 is great. EDF is a measurement of how strictly the model matches the original data; when EDF = 1, the model will be a straight line; when EDF equals the number of observations, the model will exactly match each recorded data point. We can also see the type of radial basis function used: in this case it is the Wendland function. We also have the default 3 levels to capture different effect scales.
 
-##Plotting the results
+## Plotting the results
 
 Now, we'll make a plot of the original 50 data points and the true function ($\sin(x)$) and the \ttt{LatticeKrig} fit at 200 equally spaced points to compare them.
 ```{r QuickStart1DPlot}
@@ -40,11 +40,13 @@ For this example, the fitted curve (in red) matches the true function (in blue) 
 
 ## Inference and error analysis
 
-Although it is beyond the scope of this Vignette to go into the details of conditional simulation it is useful to explain how the package is designed to do this computation -- and what it is good for! Suppose you have fit a model to data, with the results in \ttt{MyFit} as an \ttt{LKrig} or \ttt{LatticeKrig} object and suppose \ttt{Z1} are the covariates at the locations \ttt{x1}.  
-The following code generates 10 draws from the distribution of the unknown process *given* (i.e. conditional on) the observations. This random sample is often called an ensemble. As a frequentist-based package, the conditioning in LatticeKrig also assumes that sigma, rho, alpha and a.wght covariance parameters are known. (A Bayesian approach would also sample these from their posterior distribution.)
+Although it is beyond the scope of this Vignette to go into the details of conditional simulation, it is useful to explain how the package is designed to do this computation -- and what it is good for! Suppose you have fit a model to data, with the results in \ttt{MyFit} as an \ttt{LKrig} or \ttt{LatticeKrig} object and suppose \ttt{Z1} is the covariates at the locations \ttt{x1}.  
+The following code generates 10 draws from the distribution of the unknown process *given* (i.e. conditional on) the observations. This random sample is often called an ensemble. As a frequentist-based package, the conditioning in LatticeKrig also assumes that \ttt{tau}, \ttt{sigma2}, \ttt{alpha} and \ttt{a.wght} covariance parameters are known. (A Bayesian approach would also sample these from their posterior distribution.)
+
+(The covariance parameters alpha and a.wght are chosen by default in LatticeKrig. See Section 3 for information on those parameters.)
 
 ```{r eval=FALSE}
- aDraw<- LKrig.sim.conditional( MyFit, M=10, x.grid= x1, Z.grid=Z1)
+aDraw <- LKrig.sim.conditional(MyFit, M = 10, x.grid = x1, Z.grid = Z1)
 ```
 The interpretation of \ttt{aDraw} is that each column of aDraw is an equally likely representation of the process and linear model at locations \ttt{x1} given the observed data. As M becomes large the sample mean of the ensemble will converge to the estimate from LKrig. These simulations are easier to compute than the standard error for large data sets and so they are used to estimate the standard error of a model in LatticeKrig. The sample covariances of the ensemble will converge to the correct covariance matrix expressing the uncertainty in the estimate.
 
@@ -65,6 +67,8 @@ points(locations, observations)
 lines(xGrid, prediction, col='red', lty=2, lwd=2)
 ```
 
+For any given location, we can be 95% confident that that point on the true curve falls within the envelope above.
+
 This next plot adds a collection of simulations based on the fitted curve and the 95\% confidence envelope for the entire fitted curve.
 
 ```{r QuickStart1DErrorPlot2}
@@ -84,25 +88,36 @@ for(i in 1:10) {
 
 ```
 
-We can see that the simulations get farther apart, meaning the confidence envelope gets wider, where there aren't many data points and especially at the edges of the region.
+We can be 95% confident that the entire true curve falls within the envelope above. We can see that the simulations get farther apart, meaning the confidence envelope gets wider, where there aren't many data points and especially at the edges of the region.
 
 ## Two dimensional example
 
-For another, more practical example, we will predict the average daily mean spring temperature for locations throughout Colorado. Using the data set \ttt{COmonthlyMet}, we can make a surface showing our predictions over a range of longitudes and latitudes, use the \ttt{US} function to draw in the USA state borders to show where Colorado is, and draw the points where data was recorded. Notice that \ttt{LatticeKrig} will automatically discard any data points with missing values (NAs) if needed.
+For another, more practical example, we will predict the average daily mean spring temperature for locations throughout Colorado, using the data set \ttt{COmonthlyMet}. First, let's plot the observed data. Use the \ttt{US} function to draw in the USA state borders to show where Colorado is.
 
-```{r QuickStart2D}
+```{r QuickStart2DLoad}
 data(COmonthlyMet)
 locations <- CO.loc
 observations <- CO.tmean.MAM.climate
+```
+
+```{r QuickStart2DPlot0}
+bubblePlot(locations[!is.na(observations),], observations[!is.na(observations)],
+           main = "Observed Spring Temperature Across Colorado",
+           xlab="Longitude", ylab="Latitude")
+US(add=TRUE, col='grey', lwd=4)
+```
+
+We can make a surface showing our predictions at unobserved locations over this range of longitudes and latitudes using LatticeKrig, and draw the points where data was recorded. Notice that \ttt{LatticeKrig} will automatically discard any data points with missing values (NAs) if needed.
+
+```{r QuickStart2D}
 kFitWeather <- LatticeKrig(locations, observations)
 print(kFitWeather)
 ```
 
-
-
 ```{r QuickStart2DPlot1}
 surface(kFitWeather, main = "Spring Temperature Estimates across Colorado",
-        xlab="Longitude", ylab="Latitude")
+        xlab="Longitude", ylab="Latitude",
+        zlim=c(min(observations[!is.na(observations)]), max(observations[!is.na(observations)])))
 points(locations, pch = '*')
 US(add=TRUE, col='black', lwd=4)
 ```
@@ -118,7 +133,7 @@ kFitWeather <- LatticeKrig(locations, observations, Z=cbind(elevations))
 print(kFitWeather)
 ```
 
-Compared to the previous fit, we can see that this new fit with the covariate has much fewer effective degrees of freedom and a much lower \ttt{rho}, which means that the covariate was able to explain a significant amount of the variation in the data. 
+Compared to the previous fit, we can see that this new fit with the covariate has much fewer effective degrees of freedom and a much lower \ttt{sigma2}, which means that the covariate was able to explain a significant amount of the variation in the data. 
 
 ```{r QuickStart2DPlot2}
 # look at the help file in fields for information on the grid.list format
@@ -138,7 +153,7 @@ Finally, it is important to note some potential issues that \ttt{LatticeKrig} ca
 As a final topic we describe how to generate realizations from the Gaussian model in this package. The \ttt{LKinfo} object has a full description of the model and so simulation is easy. In the two examples of this section this object was set up from the top level function \ttt{LatticeKrig} and is the LKinfo component of the returned results. For more control over the model, however,  we recommend that this object be created separately. (See Section 3)
 
 For 
-\ttt{kFit1D} from Section 2.1 note that a listing of the full model is shown from.
+\ttt{kFit1D} from Section 2.1 note that a listing of the full model is shown from:
 ```{r eval=FALSE}
 print(kFit1D$LKinfo)
 ```
@@ -151,7 +166,8 @@ gSim <- LKrig.sim(xGrid, kFit1D$LKinfo, M=4)
 matplot(xGrid, gSim, type="l", lty=1, xlab="x", ylab="g(x)")
 title("Simulated curves from LK model")
 ```
-Note that in actually fitting the data a linear function is also included but since this is not a random component it is not part of the simulated process. Also the variance of the process is set to one. 
+
+Note that in actually fitting the data a linear function is also included, but since this is not a random component it is not part of the simulated process. Also the variance of the process is set to one. 
 
 These simulated curves are referred to as *unconditional* because they are
 unrelated to the actual data except in terms of the range of the x values.
