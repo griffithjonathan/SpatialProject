@@ -17,7 +17,7 @@ Two  quotes by Waldo Tobler sum this up nicely:
 \end{quote}  
 In the methods of this package, we quantify this relatedness  of "near things"",  statistically using correlation.
 
-Kriging (named for South African statistician Danie Krige) is a method for making predictions from a
+Kriging (named for South African statistician Daniel Krige) is a method for making predictions from a
 spatial data set first developed for mineral exploration.
 As such, kriging can be applied to a variety of important
 data sets, from geological data to atmospheric data. Moreover, the method 
@@ -28,7 +28,7 @@ The Kriging predictions are weighted sums of the observations, where the weights
 covariances and are different at every location. 
 
 The standard spatial model for Kriging relates the observation to a sum of three components:
-a \textit{fixed part} typcially a polynomial function of the locations (and covariates,
+a \textit{fixed part} typically a polynomial function of the locations (and covariates,
 if provided),
 a \textit{spatial process}, and \textit{measurement error}. This is a more practical model for data
 analysis but involves more complicated formulae for the Kriging weights. The LatticeKrig (LK) model
@@ -37,9 +37,9 @@ like most spatial methods, decomposes the data into these three components.
 ## The LatticeKrig model
 
 The key feature of LatticeKrig is that we model a spatial process as the sum of radial basis functions (functions that are symmetric around their center and are 0 for far away points) scaled by coefficients, which we assume are correlated. The smooth basis functions and correlated coefficients create a smooth function representation for the spatial process, and the structure of the basis functions and covariance has some flexibility so you can change the structure to make a more reasonable model for a certain problem. The linear polynomial in the locations and covariates is determined using generalized least squares, following the standard approach of Universal Kriging. To approximate the spatial process, we then fit the basis functions to the residuals from the linear model. In terms of linear algebra, the model is
-\[\mathbf y = X \mathbf d + \Phi \mathbf c + \mathbf e\]
+$$\mathbf y = X \mathbf d + \Phi \mathbf c + \mathbf e$$
 where $\mathbf y$ is the vector of variable measurements, $X$ is the matrix of locations and covariates, $\mathbf d$ is the vector of coefficients for the linear model, $\Phi$ is the matrix of basis functions evaluated at the data points, $\mathbf c$ is the vector of coefficients for each basis function, and $\mathbf e$ is the measurement error. If we let $\mathbf g$ represent the true values of the variable (without measurement error $\mathbf e$), we can unroll the matrix multiplications into sums and get the form
-\[ g(\mathbf s) = \sum_{k=1}^n \phi_k(\mathbf s) \hat {\mathbf d}_k + \sum_{k=1}^m \psi_k (\mathbf s) \hat{\mathbf c}_k\]
+$$ g(\mathbf s) = \sum_{k=1}^n \phi_k(\mathbf s) \hat {\mathbf d}_k + \sum_{k=1}^m \psi_k (\mathbf s) \hat{\mathbf c}_k$$
 We show the derivations of the equations for $\mathbf c$ and $\mathbf d$ in Appendix A, and show how all of these calculations are done in Appendix C.
 
 The package is named LatticeKrig because of the placement of the basis functions: they are equally spaced in all dimensions on a lattice. We can also consider multiple different lattice sizes simultaneously to better capture different levels of resolution; by default, each additional level has half as much space between the basis functions in each dimension.
@@ -78,6 +78,14 @@ legend("topright", c("First Level", "Second Level", "Third Level"),
 #lines(values[,7], x=gridPoints, type="l", col="black", lwd=3)
 ```
 
+Using three levels in practice, similar to those in the plot above, we can add the contributions from each level to capture spatial patterns more precisely at different scales.
+
+\textbf{First Level:} Captures broad, large-scale trends in the data with basis functions further apart that cover larger areas.
+
+\textbf{Second Level:} Captures medium-scale trends in the data with basis functions closer together.
+
+\textbf{Third Level:} Captures fine-scale variability with tightly spaced basis functions to account for small, localized changes.
+
 To represent a curve, we multiply each basis function by a coefficient and add them together, as shown in the following plot.The blue bars show the coefficient value at each lattice point, and the black line shows the resulting curve from scaling the basis functions with these coefficients and adding them together.
 
 ```{r IntroCurveSimulations, fig.height=3.5, fig.width=6, echo=FALSE}
@@ -85,12 +93,210 @@ info <- LKrigSetup(as.matrix(c(0,10)), alpha = 1, nlevel = 1, NC = 11, NC.buffer
 set.seed(483765)
 coefs <- LKrig.sim(seq(0,10,,100), info, M=1, just.coefficients = TRUE)
 curve <- values1 %*% coefs
-plot(curve, type="l", x = seq(0,10,,1000), xlab = "Location",
-     ylab = "Curve value", main="Example 1-D Curve and Coefficients")
+plot(curve, type="l", col = 'blue', lwd = 2, x = seq(0,10,,1000), xlab = "Location",
+     ylab = "Curve Value", main="Example 1-D Curve and Coefficients")
 abline(v = 0:10, col="gray", lty=2)
 abline(h = 0, col = "darkgray")
+for (i in 1:ncol(values1)) {
+  lines(gridPoints, values1[, i] * coefs[i], col = adjustcolor("black", alpha.f = 0.5))
+}
 barplot(coefs, col = "lightblue", width = 0.2, space = c(-0.5, rep(4, 10)), add = TRUE)
+
+legend("topleft", legend = c("Fitted Curve", "Basis Functions", "Coefficients"),
+       col = c("blue", "black", "lightblue"), lty = c(1, 1, NA), 
+       lwd = c(2, 1, NA), pch = c(NA, NA, 15), pt.cex = c(1, 1, 2),
+       bty = "n", inset = 0.02)
+
 ```
+
+Now we show a visualization of simulated observed data with the true function and fitted curve in the following plot. The red dots are the observed data that represent actual data points collected (e.g., measurements of a variable like temperature or rainfall). The dashed orange curve represents the true function or "ground truth" that represents the actual relationship between the variable and the location, without noise. The fitted curve is the best approximation of the true function using the basis functions and their coefficients.
+
+```{r, echo=FALSE}
+# Created using LLM
+library(gridExtra)
+library(ggplot2)
+
+# Generate grid points and centers for basis functions
+grid_points <- seq(0, 10, length = 1000)
+centers <- seq(0, 10, by = 2)  # Centers for the basis functions
+overlap <- 2.5
+
+# Generate true underlying function (ground truth)
+set.seed(532)
+true_function <- function(x) 0.8 * sin(2 * pi * x / 10) + 0.2
+observed_points <- seq(0, 10, length.out = 11)  # Observed locations
+observed_values <- true_function(observed_points) + rnorm(11, sd = 0.1)  # Add noise
+
+# Calculate basis function values for observed points
+basis_values <- sapply(centers, function(center) {
+  phi(abs(observed_points - center) / overlap)
+})
+
+# Fit coefficients using least squares
+coefficients <- solve(t(basis_values) %*% basis_values) %*% t(basis_values) %*% observed_values
+
+# Reconstruct the fitted curve
+fitted_curve <- sapply(grid_points, function(x) {
+  sum(coefficients * sapply(centers, function(center) {
+    phi(abs(x - center) / overlap)
+  }))
+})
+
+# Visualize the process
+# 1. Observed points and true function
+true_curve <- data.frame(Location = grid_points, Value = true_function(grid_points))
+observed_data <- data.frame(Location = observed_points, Value = observed_values)
+fitted_data <- data.frame(Location = grid_points, Value = fitted_curve)
+
+# 2. Create a list of data frames for each scaled basis function
+scaled_basis_list <- lapply(seq_along(centers), function(i) {
+  data.frame(
+    Location = grid_points,
+    Value = coefficients[i] * phi(abs(grid_points - centers[i]) / overlap),
+    BasisFunction = paste0("BF_", i)
+  )
+})
+
+# Combine all scaled basis function data frames into one
+scaled_basis_data <- do.call(rbind, scaled_basis_list)
+
+# Plot 1: Observed Data and Fitted Curve with Direct Labels
+p1 <- ggplot() +
+  geom_line(data = data.frame(Location = grid_points, Value = true_function(grid_points)),
+            aes(x = Location, y = Value),
+            linetype = "dashed", size = 1.2, alpha = 0.7, color = "orange") +
+  geom_point(data = data.frame(Location = observed_points, Value = observed_values),
+             aes(x = Location, y = Value),
+             size = 3, color = "red") +
+  geom_line(data = fitted_data,
+            aes(x = Location, y = Value),
+            size = 1.2, color = "blue") +
+  labs(
+    title = "Observed Data, True Function, and Fitted Curve",
+    x = "Location",
+    y = "Value"
+  ) +
+  annotate("text", x = 8, y = 0.8, label = "True Function (Dashed)", size = 4, color = "orange") +
+  annotate("text", x = 8, y = 0.6, label = "Observed Data (Red Dots)", size = 4, color = "red") +
+  annotate("text", x = 8, y = 0.4, label = "Fitted Curve (Blue)", size = 4, color = "blue") +
+  theme_minimal()
+
+# Plot 2: Scaled Basis Functions with Fitted Curve Overlay
+p2 <- ggplot() +
+  geom_line(data = scaled_basis_data,
+            aes(x = Location, y = Value, group = BasisFunction), color = "gray", alpha = 0.6) +
+  geom_line(data = fitted_data, aes(x = Location, y = Value), color = "blue", size = 1.2) +
+  labs(
+    title = "Scaled Basis Functions and Fitted Curve",
+    x = "Location",
+    y = "Value"
+  ) +
+  annotate("text", x = 8, y = 0.5, label = "Fitted Curve (Blue)", size = 4, color = "blue") +
+  annotate("text", x = 2, y = -0.2, label = "Scaled Basis Functions (Gray)", size = 4, color = "darkgray") +
+  theme_minimal()
+# Combine the plots
+grid.arrange(p1, p2, ncol = 1)
+```
+
+## Demonstration of Process for Better Intuition
+
+As a primer for the rest of this tutorial, we'll give a brief example of fitting 2D real world data using the LatticeKrig model. The dataset we will use is from GSK pharmaceuticals that was an experiment on rats for an appetite suppressant drug. The y-axis depicts the intake of the rats over the course of the experiment and the x-axis is the span of days, with day 40 being when the appetite suppressant is removed. This is a small dataset that will allow us to more easily interrogate what is going on compared to the large datasets the LatticeKrig model is especially designed for.
+
+```{r}
+# Visualize data
+s<- cbind(rat.diet$t) # Force this to be a matrix so it can be used in the LKrigSetup function
+z<- rat.diet$trt
+
+# Fit the LatticeKrig model
+obj <- LatticeKrig(s, z)
+
+plot(s, z, main = "Rat Appetite Intake Over Time", xlab = "Time (days)", ylab = "Intake",
+     pch = 19, col = "blue")  # Add data points
+abline(v = 40, col = "red", lty = 2)  # Add a vertical line for day 40
+
+# Predict over a grid
+sGrid <- seq(min(s), max(s), 0.5)
+yHat <- predict(obj, sGrid)
+
+# Add predicted curve to the plot
+lines(sGrid, yHat, col = "green3", lwd = 2)
+
+# Add legend for predicted curve
+legend("topleft", legend = c("Observed Data", "Predicted Curve", "Day 40"),
+       col = c("blue", "green3", "red"), pch = c(19, NA, NA), lty = c(NA, 1, 2), lwd = c(NA, 2, 1))
+```
+
+We can see that the fitted curve looks like a reasonably accurate fit. Next we'll take a look at the basis functions that were used to fit this curve.
+
+```{r}
+# Evaluate basis functions on grid
+basis <- LKrig.basis(sGrid, obj$LKinfo)
+
+# Plot basis functions
+matplot(sGrid, basis, type = "l", lty = 1, main = "Basis Functions", xlab = "Time (days)", ylab = "Value")
+
+# Summary of LKinfo
+obj$LKinfo
+```
+
+We visualize in the plot above that the coefficients were computed and the curve was fit using three levels of basis functions, similar to the visual in the beginning of the introduction. Looking at the summary of the LKinfo below the basis function plot, we can see each level of basis functions including how many are included in each. Notice that there was a total of 68 basis functions used to fit 39 data points. That may seem excessive but that is the key motivation for using LatticeKrig over other methods for large datasets. LatticeKrig's approach ensures a smooth approximation by leveraging more basis functions than observations, which is especially beneficial for interpolating large, complex datasets. An interesting point to note is that each level of basis functions adds five basis functions on both sides on the specified amount. This is done to eliminate edge effects in this model that is inherint to spatial autoregression (SAR) models.\\
+
+Now we'll dig in a little deeper and show how the coefficients are calculated. We'll isolate the first level of basis functions and use these to calculate the coefficients. To do this, we will first extract the basis function matrix that contains just this first level. 
+
+```{r, fig.width=12, fig.height=6}
+# Set up model parameters
+LKinfo <- LKrigSetup(s,
+                     a.wght = 2.01,
+                     nlevel = 1, 
+                     NC = 6,
+                     LKGeometry = "LKInterval")
+
+# Evaluate basis functions
+look <- LKrig.basis(sGrid, LKinfo)  # Evaluate basis functions at sGrid
+
+# Construct sparse matrix
+B <- LKrigSAR(LKinfo, Level = 1)
+B_dense <- spind2full(B)  # Convert sparse matrix to dense format for visualization
+
+# Visualize basis functions and sparse matrix side by side
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 0, 5))
+
+
+# Plot basis functions
+matplot(sGrid, look, type = "l", lty = 1, col = 1:6,
+        main = "Basis Functions", xlab = "Time (days)", ylab = "Value")
+
+# Plot sparse matrix
+imagePlot(B_dense, main = "Sparse Matrix (B)", xlab = "Column Index", ylab = "Row Index")
+
+```
+
+When we multiply the inverse of this sparse matrix by a vector of random iid standard normal values, we will obtain a random realization of our coefficients. That is, the coefficients are calculated as
+$$c = B^{-1}r, \hspace{2cm} \text{where} \hspace{2cm} r \sim N(0,I)$$
+
+```{r, fig.width=12, fig.height=6}
+# Simulate coefficients
+# Basis matrix evaluated at all grid points
+B<- spind2full(B) # Since B is constructed as a sparse matrix, we need to convert this into a dense matrix format to                        get a nice picture
+PhiGrid<- LKrig.basis(sGrid,
+                      LKinfo)
+
+# Set up 2x2 plotting layout
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))  # 2x2 grid with appropriate margins
+
+# Simulate and plot four realizations
+set.seed(222)  # Ensure reproducibility
+for (i in 1:4) {
+  cSim <- solve(B) %*% rnorm(16)            # Generate coefficients
+  ySim <- PhiGrid %*% cSim                 # Simulate Gaussian process
+  plot(sGrid, ySim, type = "l", col = "green3", lwd = 2,
+       main = paste("Simulation", i),
+       xlab = "Time (days)", ylab = "Response")
+}
+```
+
+Each of the above realizations of the normally distributed coefficients represents a possible fit of coefficients that are consistent with the covariance of a Gaussian Process model. Each one shows heavy correlation as a result of being a spatial autoregression (SAR). In the context of our example, we are assuming that the rat intake response over time is a realization of a Gaussian Process and the randomness of the coefficients reflects the variability and uncertainty in the process. These multiple different realizations help better visualize this concept.
+
 
 ## Glossary of important package functions
 
