@@ -68,16 +68,16 @@ spherePoleFit <- LatticeKrig(polarLocations, polarValues, LKinfo = spherePoleInf
 
 
 surface(rectEqFit, main="Equator Surface Prediction \nUsing Rectangular Kriging",
-        xlab="Longitude", ylab="Latitude")
+        xlab="Longitude", ylab="Latitude", col=tim.colors(64))
 
 surface(rectPoleFit, main="Polar Surface Prediction \nUsing Rectangular Kriging",
-        xlab="Longitude", ylab="Latitude")
+        xlab="Longitude", ylab="Latitude", col=tim.colors(64))
 
 surface(sphereEqFit, main="Equator Surface Prediction \nUsing Spherical Kriging",
-        xlab="Longitude", ylab="Latitude")
+        xlab="Longitude", ylab="Latitude", col=tim.colors(64))
 
 surface(spherePoleFit, main="Polar Surface Prediction \nUsing Spherical Kriging",
-        xlab="Longitude", ylab="Latitude")
+        xlab="Longitude", ylab="Latitude", col=tim.colors(64))
 ```
 
 As we can see, the rectangular model performs very differently at the equator and at the pole. It matches the true data nicely at the equator, but its predictions at the pole produce very uneven contour lines, despite the true data being the same at both locations. Meanwhile, the spherical model predicts similarly smooth contour lines at the equator and the pole, both matching the true data nicely.
