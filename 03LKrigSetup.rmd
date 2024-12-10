@@ -1,6 +1,8 @@
 # \ttt{LKrigSetup}
 
-The only \textit{required} arguments for the \ttt{LatticeKrig} function are the set of locations and variable observations. However, \ttt{LatticeKrig} also allows for a variety of optional arguments to adapt the model to be more realistic. In this section we will list some of the most important optional parameters that can be passed into \ttt{LatticeKrig}; for a complete list, check the \ttt{LatticeKrig} help page. The \ttt{LKrigSetup} function is a convenient (and, in some cases, the only) way to pass in a group of parameters to \ttt{LatticeKrig} or \ttt{LKrig}. We will cover the required parameters and some of the more important optional parameters here; for full descriptions, check the help pages for \ttt{LatticeKrig} and \ttt{LKrigSetup}. This code will printout of the \ttt{LKinfo} object created by \ttt{LatticeKrig} in the quick start guide's one-dimensional example.
+The only \textit{required} arguments for the \ttt{LatticeKrig} function are the set of locations and variable observations. However, \ttt{LatticeKrig} also allows for a variety of optional arguments to adapt the model to be more realistic. The \ttt{LKrigSetup} function is a convenient (and, in some cases, the only) way to pass in a group of parameters to \ttt{LatticeKrig} or \ttt{LKrig}. We will cover the required parameters and some of the more important optional parameters here; for full descriptions, check the help pages for \ttt{LatticeKrig} and \ttt{LKrigSetup}. 
+
+This code will printout the \ttt{LKinfo} object created by \ttt{LatticeKrig} in the quick start guide's one-dimensional example.
 ```{r LKInfoPrint, eval=FALSE}
 print(kFit1D$LKinfo)
 ```
@@ -8,18 +10,18 @@ print(kFit1D$LKinfo)
 We could make such an LKinfo object directly from the \ttt{LKrigSetup} function as follows:
 
 ```{r LKInfoConstruct, eval = FALSE}
-kFit1DInfo <- LKrigSetup(locations, nlevel = 3, NC = 6, nu = 1, a.wght = 2.01)
+kFit1DInfo <- LKrigSetup(x = locations, nlevel = 3, NC = 6, nu = 1, a.wght = 2.01)
 ```
 
-##Required Parameters for \ttt{LKrigSetup}
+## Required Parameters for \ttt{LKrigSetup}
 
 * \ttt{x}
 
-The parameter \ttt{x} is used to find the range of the data locations in each dimension for the lattice. As such, it is often easiest to pass in the matrix of observation locations, but you can also just pass in the range directly.
+The parameter \ttt{x} is used to find the range of the data locations in each dimension for the lattice. As such, it is often easiest to pass in the matrix of observation locations, but you can also just pass in the range directly. For example, to use the unit square as your range, format it as x = rbind(c(0,0), c(1,1)).
 
 * \ttt{nlevel} 
 
-The parameter \ttt{nlevel} is an integer that determines the number of different lattice sizes the computation should run on. This is set to 3 by default in \ttt{LatticeKrig}. Increasing \ttt{nlevel} will increase the potential detail of the fitted surface, and will increase the computation time significantly. The coefficients at each different lattice size is computed independently, and the resulting coefficients are scaled by the weights in \ttt{alpha}. 
+The parameter \ttt{nlevel} is an integer that determines the number of different lattice sizes the computation should run on. This is set to 3 by default in \ttt{LatticeKrig}. Increasing \ttt{nlevel} will increase the potential detail of the fitted surface, and will increase the computation time significantly. The coefficients at each different lattice size are computed independently, and the resulting coefficients are scaled by the weights in \ttt{alpha}. 
 
 * \ttt{NC}
 
@@ -27,11 +29,11 @@ The parameter \ttt{NC} is an integer that determines the number of basis functio
 
 * \ttt{alpha} or \ttt{alphaObject} or \ttt{nu}
 
-At least one of \ttt{alpha}, \ttt{alphaObject}, and \ttt{nu} must be set. In most cases you will use \ttt{alpha} or \ttt{nu}. The parameter \ttt{alpha} should be a vector of length \ttt{nlevel} that holds the weights that scale the basis functions on each different lattice size; \ttt{nu} is a scalar that controls how quickly the values in \ttt{alpha} decay. When \ttt{nu} is set, \ttt{alpha} will be filled by setting \ttt{alpha[i] = 2\^(-2 * i * nu)}, then scaling so the sum of the weights in \ttt{alpha} is 1. This scaling should always be done before passing in \ttt{alpha} to make sure the model fits correctly. The \ttt{alphaObject} and \ttt{a.wghtObject} below can be used for nonstationary models, which are not discussed in this vignette.
+At least one of \ttt{alpha}, \ttt{alphaObject}, and \ttt{nu} must be set. In most cases you will use \ttt{alpha} or \ttt{nu}. The parameter \ttt{alpha} should be a vector of length \ttt{nlevel} that holds the weights that scale the basis functions on each different lattice size; \ttt{nu} is a scalar that controls how quickly the values in \ttt{alpha} decay. When \ttt{nu} is set, \ttt{alpha} will be filled by setting \\ttt{alpha[i] = 2\^} \ttt{(-2 * i * nu)}, then scaling so the sum of the weights in \ttt{alpha} is 1. This scaling should always be done before passing in \ttt{alpha} to make sure the model fits correctly. The \ttt{alphaObject} and \ttt{a.wghtObject} below can be used for nonstationary models, which are not discussed in this vignette.
 
 * \ttt{a.wght} or \ttt{a.wghtObject}
 
-At least one of \ttt{a.wght} and \ttt{a.wghtObject} must be set. In most cases you will use \ttt{a.wght}, which can be either a scalar or a vector of length \ttt{nlevel}. The minimum value for this parameter varies depending on the geometry and the number of dimenions: in the default Euclidean geometry, the minimum value is two times the number of dimensions. For example, in 2 dimensions, you might set \ttt{a.wght = 4.01}. When using the \ttt{LKSphere} geometry, the minimum value for \ttt{a.wght} is 1, and again a small decimal should be added on. 
+The parameter \ttt{a.wght} determines the diagonal values of the precision matrix, which is an intermediate calculation step we touch upon lightly later in this vignette. At least one of \ttt{a.wght} and \ttt{a.wghtObject} must be set. In most cases you will use \ttt{a.wght}, which can be either a scalar or a vector of length \ttt{nlevel}. The minimum value for this parameter varies depending on the geometry and the number of dimenions: in the default Euclidean geometry, the minimum value is two times the number of dimensions. For example, in 2 dimensions, you might set \ttt{a.wght = 4.01}. When using the \ttt{LKSphere} geometry, the minimum value for \ttt{a.wght} is 1, and again a small decimal should be added on. 
 
 ## Optional parameters
 
@@ -41,7 +43,7 @@ At least one of \ttt{a.wght} and \ttt{a.wghtObject} must be set. In most cases y
 
 * \ttt{LKGeometry}
 
-The \ttt{LKGeometry} specifies the geometry used for the LK model. For example, if the dataset covers the whole earth, it would be more appropriate to base the kriging on a sphere than a rectangle. This is covered in more depth in the next section.
+The \ttt{LKGeometry} specifies the geometry used for the LK model (Euclidean by default). For example, if the dataset covers the whole earth, it would be more appropriate to base the kriging on a sphere than a rectangle. This is covered in more depth in the next section.
 
 * \ttt{distance.type}
 
@@ -49,7 +51,7 @@ When using a different \ttt{LKGeometry} than default (Euclidean), you may also n
 
 * \ttt{NC.buffer}
 
-This parameter determines how many lattice points to add outside the range of the data on each side. The effect of changing this parameter is relatively minor compared to the effect of changing \ttt{NC}, and it usually will only affect the prediction near the edges of the data.
+This parameter determines how many lattice points (each corresponding to an additional basis function) to add outside the range of the data on each side. The effect of changing this parameter is relatively minor compared to the effect of changing \ttt{NC}, and it usually will only affect the prediction near the edges of the data, where the supports of the additional basis functions overlap with the data range..
 
 * \ttt{normalize}
 
