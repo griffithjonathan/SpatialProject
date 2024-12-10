@@ -57,6 +57,11 @@ This parameter determines how many lattice points (each corresponding to an addi
 
 This parameter determines whether or not to normalize the basis functions after computing them, making the variance 1. This is set to \ttt{TRUE} by default, sacrificing some computing time to reduce edge and lattice artifacts created by the model that aren't present in the data. 
 
+
+```{r include-image, echo=FALSE}
+knitr::include_graphics("key_functions_diagram.png")
+```
+
 ## Relationships between parameters and the covariance function
 
 The following plots show how different values of \ttt{NC}, \ttt{a.wght}, \ttt{alpha}, and \ttt{nu} affect the covariance function. These plots are all one dimensional for ease of viewing; the covariance function is radially symmetric in higher dimensions and has similar dependence on these parameters.
