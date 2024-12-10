@@ -51,7 +51,11 @@ print(tab,digits=3)
 ```
 
 
-As you can see from the output above, with sizable inputs the sparse matrix computation is nearly 3 orders of magnitude   faster than the traditional dense matrix computation, and this advantage increases with larger inputs.
+### Observations from the Timing Results
+
+- Sparse matrix computations are significantly faster than dense matrix computations. As you can see from the output above, with sizable inputs the sparse matrix computation is nearly 3 orders of magnitude   faster than the traditional dense matrix computation, especially for larger matrices.
+
+- The advantage of sparse matrices grows with the size of the matrix because the number of zero entries increases proportionally in larger grids.
 
 ## Precision matrix example
 Here is another example of sparse timing that also illustrates how to create a 
@@ -98,5 +102,41 @@ deltaF<-  Sys.time() - startTime
 cat("Sparse time", deltaS, "Dense time", deltaF, fill=TRUE)
 ```
 
+### Insights
 
+- Sparse representations save both time and memory, making computations feasible for large grids.
+
+- Even when using the same mathematical operations, the sparse formatting leads to significantly reduced computational cost due to the efficient handling of zero entries.
+
+ 
+
+## Additional Tips for Using Sparse Matrices
+
+ 
+
+1. **Efficient Storage:**
+
+   - Always use sparse formatting (`spam` or similar packages) when working with large matrices with a known sparsity pattern.
+
+ 
+
+2. **Matrix Operations:**
+
+   - Leverage functions optimized for sparse matrices (e.g., `chol`, `solve`) instead of converting to dense representations.
+
+ 
+
+3. **Visualization:**
+
+   - Plotting sparsity patterns can help diagnose issues or confirm the structure of precision or covariance matrices.
+
+ 
+
+4. **Benchmarking:**
+
+   - Regularly compare performance with dense matrices for different grid sizes to ensure optimal performance.
+
+ 
+
+These insights, combined with the efficient methods provided in the `spam` package, make LatticeKrig a powerful tool for large-scale spatial analysis.
 

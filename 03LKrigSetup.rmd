@@ -107,3 +107,53 @@ matplot(NuPlot, type = "l", lty = 1, x = xGrid, xlab = "Location", ylab = "Corre
 legend("topright", c("nu = 0", "nu = 0.5", "nu = 1"), col = c("black", "red", "green"), 
        lty = 1)
 ```
+
+Covariance comparison under different setups:
+
+```{r}
+
+# Alternative setups
+
+s<- cbind(rat.diet$t)
+
+z<- rat.diet$trt
+
+obj<- LatticeKrig(s,z)
+
+cov0<- LKrig.cov(sGrid, 30, LKinfo = LKinfo)
+
+plot( sGrid, cov0, type="l", ylim=c(0,1))
+
+xline( 30)
+
+LKinfo1<- LKrigSetup(s,
+
+a.wght=2.5,
+
+nlevel=1,
+
+NC=6,
+
+LKGeometry = "LKInterval")
+
+cov1<- LKrig.cov(sGrid, 30, LKinfo = LKinfo1)
+
+lines( sGrid, cov1, col="magenta")
+
+LKinfo2<- LKrigSetup(s,
+
+a.wght=2.5,
+
+nlevel=3,
+
+NC=6,
+
+nu=.5,
+
+LKGeometry = "LKInterval")
+
+cov2<- LKrig.cov(sGrid, 30, LKinfo = LKinfo2)
+
+lines( sGrid, cov2, col="blue2")
+
+```
