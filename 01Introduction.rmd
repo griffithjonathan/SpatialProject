@@ -116,8 +116,8 @@ Now we show a visualization of simulated observed data with the true function an
 
 ```{r, echo=FALSE}
 # Created using LLM
-library(gridExtra)
-library(ggplot2)
+suppressMessages(library(gridExtra))
+suppressMessages(library(ggplot2))
 
 # Generate grid points and centers for basis functions
 grid_points <- seq(0, 10, length = 1000)
@@ -207,7 +207,7 @@ As a primer for the rest of this tutorial, we'll give a brief example of fitting
 
 ```{r}
 # Visualize data
-s<- cbind(rat.diet$t) # Force this to be a matrix so it can be used in the LKrigSetup function
+s<- cbind(rat.diet$t) # Force this to be a matrix so it can be used in LKrigSetup
 z<- rat.diet$trt
 
 # Fit the LatticeKrig model
@@ -226,7 +226,8 @@ lines(sGrid, yHat, col = "green3", lwd = 2)
 
 # Add legend for predicted curve
 legend("topleft", legend = c("Observed Data", "Predicted Curve", "Day 40"),
-       col = c("blue", "green3", "red"), pch = c(19, NA, NA), lty = c(NA, 1, 2), lwd = c(NA, 2, 1))
+       col = c("blue", "green3", "red"), pch = c(19, NA, NA), 
+       lty = c(NA, 1, 2), lwd = c(NA, 2, 1))
 ```
 
 We can see that the fitted curve looks like a reasonably accurate fit. Next we'll take a look at the basis functions that were used to fit this curve.
@@ -236,7 +237,8 @@ We can see that the fitted curve looks like a reasonably accurate fit. Next we'l
 basis <- LKrig.basis(sGrid, obj$LKinfo)
 
 # Plot basis functions
-matplot(sGrid, basis, type = "l", lty = 1, main = "Basis Functions", xlab = "Time (days)", ylab = "Value")
+matplot(sGrid, basis, type = "l", lty = 1, main = "Basis Functions", 
+        xlab = "Time (days)", ylab = "Value")
 
 # Summary of LKinfo
 obj$LKinfo
@@ -280,7 +282,8 @@ $$c = B^{-1}r, \hspace{2cm} \text{where} \hspace{2cm} r \sim N(0,I)$$
 ```{r, fig.width=12, fig.height=6}
 # Simulate coefficients
 # Basis matrix evaluated at all grid points
-B<- spind2full(B) # Since B is constructed as a sparse matrix, we need to convert this into a dense matrix format to                        get a nice picture
+B<- spind2full(B) # Since B is constructed as a sparse matrix, we need to convert 
+                  # this into a dense matrix format to get a nice picture
 PhiGrid<- LKrig.basis(sGrid,
                       LKinfo)
 

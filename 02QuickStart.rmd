@@ -72,7 +72,8 @@ For any given location, we can be 95% confident that that point on the true curv
 This next plot adds a collection of simulations based on the fitted curve and the 95\% confidence envelope for the entire fitted curve.
 
 ```{r QuickStart1DErrorPlot2}
-#computing the number of standard deviations needed to make the envelope contain 95% of the data
+# computing the number of standard deviations needed to make the envelope contain 
+# 95% of the data
 norm <- (uncertainty$g.draw - as.vector(prediction)) / sdVec
 gammas <- apply(abs(norm), 2, max)
 gamma <- quantile(gammas, 0.95)
@@ -80,7 +81,8 @@ gamma <- quantile(gammas, 0.95)
 upperBound <- prediction + gamma*sdVec
 lowerBound <- prediction - gamma*sdVec
 plot(xGrid, upperBound, type="l", ylim = c(min(lowerBound), max(upperBound)),
-     main = "Simulated Curves with Confidence Envelope", xlab = "Location", ylab = "Measured Value")
+     main = "Simulated Curves with Confidence Envelope", xlab = "Location", 
+     ylab = "Measured Value")
 envelopePlot(xGrid, y1 = lowerBound, y2 = upperBound)
 for(i in 1:10) {
   lines(uncertainty$x.grid, uncertainty$g.draw[,i], col="gray")
@@ -117,7 +119,8 @@ print(kFitWeather)
 ```{r QuickStart2DPlot1}
 surface(kFitWeather, main = "Spring Temperature Estimates across Colorado",
         xlab="Longitude", ylab="Latitude",
-        zlim=c(min(observations[!is.na(observations)]), max(observations[!is.na(observations)])))
+        zlim=c(min(observations[!is.na(observations)]), 
+               max(observations[!is.na(observations)])))
 points(locations, pch = '*')
 US(add=TRUE, col='black', lwd=4)
 ```

@@ -58,7 +58,7 @@ This parameter determines how many lattice points (each corresponding to an addi
 This parameter determines whether or not to normalize the basis functions after computing them, making the variance 1. This is set to \ttt{TRUE} by default, sacrificing some computing time to reduce edge and lattice artifacts created by the model that aren't present in the data. 
 
 
-```{r include-image, echo=FALSE}
+```{r include-image, echo=FALSE, out.width="400px", out.height="300px"}
 knitr::include_graphics("key_functions_diagram.png")
 ```
 
@@ -82,25 +82,30 @@ par(mfrow = c(2, 2))
 NCPlot = cbind(basis(abs(xGrid/5)), basis(abs(xGrid/2.5)), basis(abs(xGrid/1.25)))
 matplot(NCPlot, type = "l", lty = 1, x = xGrid, xlab = "Location", ylab = "Correlation",
         main = "Effect of NC on covariance function")
-legend("topright", c("NC = 5", "NC = 10", "NC = 20"), col = c("black", "red", "green"), lty = 1)
+legend("topright", c("NC = 5", "NC = 10", "NC = 20"), col = c("black", "red", "green"), 
+       lty = 1)
 
 # Plot 2: Effect of a.wght on covariance function
 AWPlot = cbind(basis(abs(xGrid/10)), basis(abs(xGrid/2)), basis(abs(xGrid/1)))
 matplot(AWPlot, type = "l", lty = 1, x = xGrid, xlab = "Location", ylab = "Correlation",
         main = "Effect of a.wght on covariance function")
-legend("topright", c("a.wght = 2.1", "a.wght = 2.5", "a.wght = 3"), col = c("black", "red", "green"), lty = 1)
+legend("topright", c("a.wght = 2.1", "a.wght = 2.5", "a.wght = 3"), 
+       col = c("black", "red", "green"), lty = 1)
 
 # Plot 3: Effect of alpha on covariance function
 ALPlot = cbind(basis(abs(xGrid/5)), 1/2 * basis(abs(xGrid/5)), 1/4 * basis(abs(xGrid/5)))
 matplot(ALPlot, type = "l", lty = 1, x = xGrid, xlab = "Location", ylab = "Correlation",
         main = "Effect of alpha on covariance function")
-legend("topright", c("alpha = 1", "alpha = 0.5", "alpha = 0.25"), col = c("black", "red", "green"), lty = 1)
+legend("topright", c("alpha = 1", "alpha = 0.5", "alpha = 0.25"), 
+       col = c("black", "red", "green"), lty = 1)
 
 # Plot 4: Effect of nu on covariance function
-NuPlot = cbind(1/7 * basis(abs(xGrid/1.25)), 1/21 * basis(abs(xGrid/1.25)), 1/73 * basis(abs(xGrid/1.25)))
+NuPlot = cbind(1/7 * basis(abs(xGrid/1.25)), 1/21 * basis(abs(xGrid/1.25)), 
+               1/73 * basis(abs(xGrid/1.25)))
 matplot(NuPlot, type = "l", lty = 1, x = xGrid, xlab = "Location", ylab = "Correlation",
         main = "Effect of nu on covariance function (shown at 3rd level)")
-legend("topright", c("nu = 0", "nu = 0.5", "nu = 1"), col = c("black", "red", "green"), lty = 1)
+legend("topright", c("nu = 0", "nu = 0.5", "nu = 1"), col = c("black", "red", "green"), 
+       lty = 1)
 
 # Reset the layout
 par(mfrow = c(1, 1))
