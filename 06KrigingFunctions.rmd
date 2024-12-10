@@ -1,9 +1,9 @@
 # LatticeKrig Implementation Details
 
 This package is designed to be modular and separate the steps of computation, prediction and simulation. It also uses R's function overloading with S3 and S4 objects to simplify the coding. This strategy is especially helpful for different geometries and distance functions. 
-Finally, the use of sparse matrix methods is also implemented as S4 methods through the spam package so much of the linear algebra uses the standard R matrix multiplication operator \ttt{\%*\%} even through sparse computations are being done behind the scenes. 
+Finally, the use of sparse matrix methods is also implemented as S4 methods through the spam package, so much of the linear algebra uses the standard R matrix multiplication operator \ttt{\%*\%} even through sparse computations are being done behind the scenes. 
 
-Despite this complexity it is important to keep in mind the computation and statistical results are just the usual ones associated with Kriging and maximum likelihood associated with a Gaussian spatial process model. The difference is that the spatial process is specified in a way that is suited to generating sparse matrices for the computations. Also, overloading function calls makes the code handling different geometries easier to read and write, as demonstrated below.
+Despite this complexity it is important to keep in mind the computation and statistical results are just the usual ones associated with Kriging and maximum likelihood based on Gaussian spatial process models. The difference is that the spatial process is specified in a way that is suited to generating sparse matrices for the computations. Also, overloading function calls makes the code handling different geometries easier to read and write, as demonstrated below.
 
 ## An example of classes and methods
 
@@ -44,14 +44,16 @@ out2 <- makeGrid(test2)
 print(out2)
 ```
 
-The analogy in the LatticeKrig coding is that there are several generic steps in defining the spatial model that benefit from using a method without haing to add many different cases in the top level functions based on geometry. In this example one could just have a line such as ``` out <- makeGrid( gridInfo)``` and the class of \ttt{gridInfo} would direct which function is called.
+The analogy in the LatticeKrig coding is that defining a spatial model involves top level functions that perform generic steps, and these functions don't need to include many different cases based on geometry. Rather, they benefit from using methods, like makeGrid does in this example. Here, one could just have a line such as ``` out <- makeGrid(gridInfo)``` and the class of \ttt{gridInfo} would direct which function is called.
 
 ## LKinfo object
 The model computation is controlled by the \ttt{LKinfo} object. 
-This is a list of class \ttt{LKinfo} that has all the information needed to specify the spatial model. One could build this list directly including all the necessary information although is it is easier to use the function 
+This is a list of class \ttt{LKinfo} that has all the information needed to specify the spatial model. One could build this list directly including all the necessary information, although is it is easier to use the function 
 \ttt{LKrigSetup} to make sure all the details are filled in correctly. This function will also make some checks on the passed arguments and will fill in some with defaults if not specified. 
-This package provides a print method for this object class and that creates the summary of the model when this object is printed. Printing this object as a raw list would usually be a big mess of output and not very helpful! See the source code for \ttt{print.LKinfo} to see how this is done and where different components are located in the object. 
-The \ttt{LKinfo} object also has a second class that is the geometry. This controls how other components in this object are filled in. In particular the component \ttt{LatticeInfo} will change, reflecting different lattices based on different geometries. See \ttt{help(LKGeometry)} for more details on what needs to done for a given geometry. 
+
+This package provides a print method for this object class which creates the summary of the model when this object is printed. Printing this object as a raw list would usually be a big mess of output and not very helpful! See the source code for \ttt{print.LKinfo} to see how this is done and where different components are located in the object. 
+
+The \ttt{LKinfo} object actually has two classes, the first being LKinfo, and the second being the geometry, such as LKRectangle. This controls how other components in this object are filled in. In particular the component \ttt{LatticeInfo} will change, reflecting different lattices based on different geometries. See \ttt{help(LKGeometry)} for more details on what needs to done for a given geometry. 
 
 As a specific example here is how these steps fill in the lattice information for the LKInterval geometry, the 1-D model. 
 
@@ -61,7 +63,7 @@ LKinfo$latticeInfo <- do.call("LKrigSetupLattice", c(list(object = LKinfo,
         verbose = verbose), setupArgs))
 ```
 The LKinfo object in this case has already been given the 
-class "LKInterval" and so the call to \ttt{LKrigSetupLattice}
+geometry class "LKInterval" and so the call to \ttt{LKrigSetupLattice}
 branches to the actual function \ttt{LKrigSetupLattice.LKInterval}. The interested reader may want to list out this short function to see the details of this lowest code level.
 
 Although all the details of this function are not important for this illustration, there are several key features. First, all the information for constructing the lattice comes from components of LKinfo. Here \ttt{NC}, the number of initial lattce points in the spatial interval, is used to determine the grid spacing and a \ttt{for} loop is used to fill in the lattice points at each resolution level, if there is more than one level specified. Finally, all the resulting parts describing the lattice are combined as a list: this object becomes the component \ttt{latticeInfo} in the \ttt{LKinfo} object. These top level components are consistent across the different geometries and so it makes it possible to have a single summary/print method for the \ttt{LKinfo} object. 
@@ -69,12 +71,14 @@ Although all the details of this function are not important for this illustratio
 ## LKrig function
 The basic computation where the basis coefficients are estimated based on locations and data is done in \ttt{LKrig}. These steps track the explicit linear algebra in Section 11.1 and as coded, hide the details from different models. 
 As mentioned earlier, \ttt{LKrig} is the function that runs all the logic to compute the kriging fit: 
+
 * creating the covariate matrix, basis function matrix, and precision matrix;
 * running a series of intermediate calculations;
-* calculating the estimates for $\mathbf c$ and $\mathbf d$;
+* calculating the estimates for coefficient vectors $\mathbf c$ and $\mathbf d$;
 * using those coefficients to calculate the fitted values and residuals;
 * calling a function that estimates the likelihood of the calculated fit;
 * estimating the effective degrees of freedom in the fitted surface.
+
 Essentially the \ttt{LKinfo} object is the reference for what needs to be done. And the coding at this level does not have explicit branches to different geometries. 
 
 For example the line
@@ -94,7 +98,7 @@ One advantage of this structure is that new features can be added to the Lattice
 
 ## Estimating covariance parameters. 
 
-The function \ttt{LKrig} is designed to compute the model fit assuming the parameters \ttt{a.wght} and \ttt{lambda} are known. With these parameters fixed the likelihood can be maximized in closed form for the remaining parameters, \ttt{d}, \ttt{sigma} and \ttt{rho}. By default these values are used in fitting the model in this function. The component \ttt{lnProfileLike} returned in the LKrig object is the log likelihood having maximized over \ttt{d}, \ttt{sigma} and \ttt{rho}. 
+The function \ttt{LKrig} is designed to compute the model fit assuming the parameters \ttt{a.wght} and \ttt{lambda} are known. With these parameters fixed the likelihood can be maximized in closed form for the remaining parameters, \ttt{d}, \ttt{tau} and \ttt{sigma2}. By default these values are used in fitting the model in this function. The component \ttt{lnProfileLike} returned in the LKrig object is the log likelihood having maximized over \ttt{d}, \ttt{tau} and \ttt{sigma2}. 
 
 The parameters \ttt{lambda} and \ttt{a.wght} are estimated using maxmimum liklihood with built in optimizers in R and the wrapper functions \ttt{LKrigFindLambda} for a fixed \ttt{a.wght} (using \ttt{optim}) and
 \ttt{LKrigFindLambdaAwght} for finding both parameters (using \ttt{optimize}). In either case, the likelihood is evaluated by calls from the optimizer to \ttt{LKrig}. The search over lambda is done in the log scale and over a.wght in a scale (called omega) that is propotional to the log of the correlation range parameter. For a 2-D rectangle this is log(a.wght - 4)/2. (See Awght2Omega)
@@ -103,7 +107,7 @@ One useful feature of the optimization code is that each evalution of the likeli
 
 ## LatticeKrig
 
-The top level function \ttt{LatticeKrig} is an easy way to estimate these model parameters from a minimal specification of the model and then to evaluate using these estimates. It is also convenient to setup the LKinfo object. In particular \ttt{LatticeKrig} also makes use of the \ttt{LatticeKrigEasyDefaults} method depending on \ttt{LKGeometry} and provides flexibility of filling in standard model default choices without continually retyping them. 
+The top level function \ttt{LatticeKrig} sets up the default spatial model, estimates some key spatial parameters, and then calls the \ttt{LKrig} function for the actual kriging computation. This makes it an easy way to estimate these model parameters from a minimal specification of the model and then to evaluate using these estimates. It is also convenient to setup the LKinfo object. In particular \ttt{LatticeKrig} also makes use of the \ttt{LatticeKrigEasyDefaults} method depending on \ttt{LKGeometry} and provides flexibility of filling in standard model default choices without continually retyping them. 
 
 ## Prediction 
 
@@ -114,9 +118,9 @@ In general if \ttt{MyLKinfo} is the model fit using \ttt{LKrig} or \ttt{LatticeK
 ```{r eval=FALSE}
 gHat <- predict(MyLKinfo,x1)
 ```
-Here the returned vector has the predictions of the smooth function and the low order polynomial terms (if present) at the locations \ttt{x1}. 
+Here the returned vector has the predictions of the smooth function and the low order polynomial terms (if present) at the locations \ttt{x1}. That is, the \textit{fixed part} and the \textit{spatial process} explained in Section 1.
 
-One complication in this process is the need to evaluate the predictions on a grid of covariates. In the Colorado climate example one may want to predict just the smooth function of climate based on latitude and longitude or add to it the linear model adjustment due to elevation.
+One complication in this process is the need to evaluate the predictions on a grid of covariates. In the Colorado climate example one may want to predict the smooth function of climate based on latitude and longitude or add to it the linear model adjustment due to elevation.
 Moreover, one might want to evaluate these on a grid to make it easier to plot the results on a map. In 2 or more dimensions keeping track of the grids adds a step to this process; refer to the help files and the Quick Start example for more details. 
 
 ## Simulation 
@@ -132,4 +136,4 @@ gSim <- LKrig.sim(x1, LKinfo)
 
 simulates the process at the locations and returns the values as a vector in \ttt{gSim}. Note that this function is designed to only simulate the random process part of the model. The fixed linear part involving the \ttt{Z} covariates is not included. 
 
-We note that like the unconditional simulation this code depends on the LKinfo object in MyFit, and applies the estimate computation from \ttt{LKrig} and the predict function for an LKrig object. In this way the basic computational alogrithms are reused from the code base and appear only in only one place. 
+We note that like the unconditional simulation this code depends on the LKinfo object in MyFit, and applies the estimate computation from \ttt{LKrig} and the predict function for an LKrig object. In this way the basic computational algorithms are reused from the code base and appear in only one place. 
