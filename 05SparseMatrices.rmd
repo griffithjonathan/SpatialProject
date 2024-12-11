@@ -13,7 +13,7 @@ knit: (function(inputFile, encoding) {
 
 # Using Sparse Matrices
 
-LatticeKrig, along with other statistical models for large spatial data sets, makes use of sparse linear algebra for efficient computation. Sparse matrices are generated in the LK model in two ways. First, the basis functions have compact support, meaning they are 0 outside a fixed region, so many of the entries in the basis function matrix will be 0. Second, the precision matrix for the coefficients is also constructed to be sparse.  
+LatticeKrig, along with other statistical models for large spatial data sets, makes use of sparse linear algebra for efficient computation. Sparse matrices are generated in the LK model in two ways. First, the basis functions have compact support, meaning they are 0 outside a fixed region, so many of the entries in the basis function matrix will be 0. Second, the precision matrix, which gets inverted to find the covariance matrix for the coefficients is also constructed to be sparse.  
 
 Computing with sparse matrices can be much faster than the equivalent dense matrices, since one can save memory by only keeping track of the indices and values of the nonzero entries, and algorithms can skip all of the 0 entries. This optimization makes sparse matrix computations on large data sets orders of magnitude faster than the traditional corresponding computations.
 
